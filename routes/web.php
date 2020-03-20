@@ -21,3 +21,4 @@ Route::get('/', function () {
 //Routes API for Users
 Route::post('/api/register', 'UserController@register');
 Route::post('/api/login', 'UserController@login');
+Route::put('/api/user/update', 'UserController@update');
