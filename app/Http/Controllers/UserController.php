@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\JwtAuth;
 use Illuminate\Http\Request;
 use App\User;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -160,12 +161,29 @@ class UserController extends Controller
     }
 
     public function upload(Request $request) {
-        $data = array(
-            'code' => 400,
-            'status' => 'error',
-            'message' => 'Error al subir imagen'
-        );
+        //collect data
+        $image = $request->file('file0');
 
+        //Save in a disk 
+        if (!empty($image)) {
+            $image_name = time().$image->getClientOriginalName();
+            Storage::disk('users')->put($image_name, \File::get($image));
+
+            $data = array(
+                'code' => 200,
+                'status' => 'success',
+                'image' => $image_name
+            );
+        } else {
+            $data = array(
+                'code' => 400,
+                'status' => 'error',
+                'message' => 'Error al subir la imagen'
+            );
+        }
+
+        //Return message
         return response()->json($data, $data['code']);
+        
     }
 }
