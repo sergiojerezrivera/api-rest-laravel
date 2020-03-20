@@ -113,11 +113,6 @@ class UserController extends Controller
     //Check if user is logged and update DB else error message
     public function update(Request $request)
     {
-        //Collect JWT from Headers, and check token
-        $token = $request->header('Authorization');
-        $jwtAuth = new JwtAuth();
-        $checkToken = $jwtAuth->checkToken($token);
-
 
         //Update user in DB via PUT from Request
         //Collect data to update via JSON request and decode
@@ -160,6 +155,16 @@ class UserController extends Controller
                 'message' => 'El usuario no esta identificado'
             );
         }
+
+        return response()->json($data, $data['code']);
+    }
+
+    public function upload(Request $request) {
+        $data = array(
+            'code' => 400,
+            'status' => 'error',
+            'message' => 'Error al subir imagen'
+        );
 
         return response()->json($data, $data['code']);
     }

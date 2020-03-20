@@ -11,7 +11,7 @@
 |
 */
 
-use App\Http\Controllers\PruebaController;
+// use App\Http\Middleware\ApiAuthMiddleware;
 
 //Home Route
 Route::get('/', function () {
@@ -22,3 +22,4 @@ Route::get('/', function () {
 Route::post('/api/register', 'UserController@register');
 Route::post('/api/login', 'UserController@login');
 Route::put('/api/user/update', 'UserController@update');
+Route::post('/api/user/upload', 'UserController@upload')->middleware('api.auth');

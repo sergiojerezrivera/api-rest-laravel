@@ -224,6 +224,7 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'JwtAuth' => App\Helpers\JwtAuth::class,
+        'api.auth' => App\Http\Middleware\ApiAuthMiddleware::class,
     ],
 
 ];
