@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\JwtAuth;
 use Illuminate\Http\Request;
 use App\User;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
@@ -160,13 +161,25 @@ class UserController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function upload(Request $request) {
+    public function upload(Request $request)
+    {
         //collect data
         $image = $request->file('file0');
 
+        //Validate
+        $validate = \Validator::make($request->all(), [
+            'file0' => 'required|image|mimes:jpg,jpeg,png,gif'
+        ]);
+
         //Save in a disk 
-        if (!empty($image)) {
-            $image_name = time().$image->getClientOriginalName();
+        if (!$image || $validate->fails()) {
+            $data = array(
+                'code' => 400,
+                'status' => 'error',
+                'message' => 'Error al subir la imagen'
+            );
+        } else {
+            $image_name = time() . $image->getClientOriginalName();
             Storage::disk('users')->put($image_name, \File::get($image));
 
             $data = array(
@@ -174,16 +187,52 @@ class UserController extends Controller
                 'status' => 'success',
                 'image' => $image_name
             );
-        } else {
-            $data = array(
-                'code' => 400,
-                'status' => 'error',
-                'message' => 'Error al subir la imagen'
-            );
         }
 
         //Return message
         return response()->json($data, $data['code']);
-        
+    }
+
+    public function getImage($filename)
+    {
+        //This is optional to find the path and display pic ->
+        $path = storage_path('app\\users\\' . $filename);
+        //Check if filename exists then get it from Disk and print
+        $issetFileName = Storage::disk('users')->exists($filename);
+
+        if ($issetFileName) {
+            $file = Storage::disk('users')->get($filename);
+            //Next line optional to display pic  -> 
+            $type = \File::mimeType($path);
+            return response()->file($path, [
+                'Content-Type' => $type
+            ]);
+        } else {
+            $data = array(
+                'code' => 404,
+                'status' => 'error',
+                'message' => 'Error al mostrar la imagen'
+            );
+            return response()->json($data, $data['code']);
+        }
+    }
+
+    public function detail($id) {
+        $user = User::find($id);
+
+        if (is_object($user)) {
+            $data = array(
+                'code' => 200,
+                'status' => 'success',
+                'user' => $user
+            );
+        } else {
+            $data = array(
+                'code' => 404,
+                'status' => 'error',
+                'message' => 'El usuario no existe'
+            );
+        }
+        return response()->json($data, $data['code']);
     }
 }
