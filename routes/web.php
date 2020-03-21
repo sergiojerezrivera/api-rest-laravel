@@ -18,10 +18,14 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-//Routes API for Users
+//Routes for Users
 Route::post('/api/register', 'UserController@register');
 Route::post('/api/login', 'UserController@login');
 Route::put('/api/user/update', 'UserController@update');
 Route::post('/api/user/upload', 'UserController@upload')->middleware('api.auth');
 Route::get('/api/user/avatar/{filename}', 'UserController@getImage');
 Route::get('/api/user/detail/{id}', 'UserController@detail');
+
+//Routes for Category the newer way 
+//To see the automated routes in terminal => php artisan route:list
+Route::resource('/api/category', 'CategoryController');
