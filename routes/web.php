@@ -29,3 +29,6 @@ Route::get('/api/user/detail/{id}', 'UserController@detail');
 //Routes for Category the newer way 
 //To see the automated routes in terminal => php artisan route:list
 Route::resource('/api/category', 'CategoryController');
+
+//Routes for Posts
+Route::resource('/api/post', 'PostController');
