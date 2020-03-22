@@ -119,13 +119,15 @@ class PostController extends Controller
                 unset($params_array['created_at']);
                 unset($params_array['user']);
 
-                Post::where('id', $id)->update($params_array);
+                //Improved method to get the full object info
+                $post = Post::where('id', $id)->updateOrCReate($params_array);
 
                 $data = array(
                     'code'      => 200,
                     'status'    => 'success',
                     'message'   => 'Datos actualizados correctamente.',
-                    'post'      => $params_array
+                    'post'      => $post,
+                    'changes'   => $params_array
                 );
             }
         } else {
