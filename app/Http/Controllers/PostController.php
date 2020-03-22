@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Helpers\JwtAuth;
 use App\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('api.auth', ['except' => ['index', 'show']]);
+        $this->middleware('api.auth', ['except' => ['index', 'show',
+         'getImage', 'getPostsByCategory', 'getPostsByUser']]);
     }
 
     public function index()
@@ -191,5 +193,94 @@ class PostController extends Controller
         $token = $request->header('Authorization', null);
         $user = $jwAuth->checkToken($token, true);
         return $user;
+    }
+
+    public function upload(Request $request)
+    {
+        //Collect image request
+        $image = $request->file('file0');
+
+        //Validate image
+        $validate = \Validator::make($request->all(), [
+            'file0' => 'required|image|mimes:jpg,jpeg,png,gif'
+        ]);
+
+        if ($validate->fails() || !$image) {
+            $data = array(
+                'code'      => 400,
+                'status'    => 'error',
+                'message'   => 'Error al subir imagen'
+            );
+        } else {
+            //Save the image in a disk called images
+            $image_name = time() . $image->getClientOriginalName();
+            Storage::disk('images')->put($image_name, \File::get($image));
+
+            $data = array(
+                'code'      => 200,
+                'status'    => 'success',
+                'image'     => $image_name,
+                'message'   => 'Imagen subida correctamente'
+            );
+        }
+        //Return Data
+        return response()->json($data, $data['code']);
+    }
+
+    public function getImage($filename)
+    {
+        $path = storage_path('app\\images\\' . $filename);
+
+        //Check if filename exists then get it from Disk and print
+        $issetFileName = Storage::disk('images')->exists($filename);
+
+        if ($issetFileName) {
+            $file = Storage::disk('images')->get($filename);
+            //Next line optional to display pic  -> 
+            $type = \File::mimeType($path);
+            return response()->file($path, [
+                'Content-Type' => $type
+            ]);
+        } else {
+            $data = array(
+                'code' => 404,
+                'status' => 'error',
+                'message' => 'Error al mostrar la imagen'
+            );
+            return response()->json($data, $data['code']);
+        }
+    }
+
+    public function getPostsByCategory($id)
+    {
+        $posts = Post::where('category_id', $id)->get();
+
+        if (!empty($posts) && is_object($posts)) {
+            return response()->json([
+                'status'    => 'success',
+                'posts'     => $posts
+            ], 200);
+        } else {
+            return response()->json([
+                'status'    => 'error',
+                'message'     => 'Error al recibir post'
+            ], 400);
+        }
+    }
+
+    public function getPostsByUser($id) {
+        $posts = Post::where('user_id', $id)->get();
+
+        if (!empty($posts) && is_object($posts)) {
+            return response()->json([
+                'status'    => 'success',
+                'posts'     => $posts
+            ], 200);
+        } else {
+            return response()->json([
+                'status'    => 'error',
+                'message'     => 'Error al recibir post'
+            ], 400);
+        }
     }
 }
