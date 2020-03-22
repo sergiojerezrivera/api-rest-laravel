@@ -49,10 +49,8 @@ class PostController extends Controller
 
         if (!empty($params_array)) {
 
-            //Need to check the logged user via TOKEN
-            $jwAuth = new JwtAuth;
-            $token = $request->header('Authorization', null);
-            $user = $jwAuth->checkToken($token, true);
+            //Get User Identify
+            $user = $this->getIdentity($request);
 
             $validate = \Validator::make($params_array, [
                 'title'         => 'required',
@@ -99,7 +97,7 @@ class PostController extends Controller
         $json = $request->input('json', null);
         $params_array = json_decode($json, true);
 
-        if (!empty($params_array)) { 
+        if (!empty($params_array)) {
 
             $validate = \Validator::make($params_array, [
                 'title'         => 'required',
@@ -119,16 +117,33 @@ class PostController extends Controller
                 unset($params_array['created_at']);
                 unset($params_array['user']);
 
-                //Improved method to get the full object info
-                $post = Post::where('id', $id)->updateOrCReate($params_array);
+                //Get User Identify
+                $user = $this->getIdentity($request);
 
-                $data = array(
-                    'code'      => 200,
-                    'status'    => 'success',
-                    'message'   => 'Datos actualizados correctamente.',
-                    'post'      => $post,
-                    'changes'   => $params_array
-                );
+                //Find the record to update
+                $post = Post::where('id', $id)
+                    ->where('user_id', $user->sub)
+                    ->first();
+
+                if (is_object($post) && !empty($post)) {
+
+                    //Update the record with multiple where's
+                    $post->update($params_array);
+
+                    $data = array(
+                        'code'      => 200,
+                        'status'    => 'success',
+                        'message'   => 'Datos actualizados correctamente.',
+                        'post'      => $post,
+                        'changes'   => $params_array
+                    );
+                } else {
+                    $data = array(
+                        'code'      => 400,
+                        'status'    => 'error',
+                        'message'   => 'Error entrada vacia.'
+                    );
+                }
             }
         } else {
             $data = array(
@@ -140,12 +155,10 @@ class PostController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function destroy($id, Request $request) {
-        //I want to to make sure that just the creator of the passed ID post
-        //is the only one that can delete the post, and no one else.
-        $jwAuth = new JwtAuth;
-        $token = $request->header('Authorization', null);
-        $user = $jwAuth->checkToken($token, true);
+    public function destroy($id, Request $request)
+    {
+        //Get User Identify
+        $user = $this->getIdentity($request);
 
         //Now I make sure the ID param matches with DB and
         //USER ID of Token matches with userID from DB and 
@@ -168,5 +181,15 @@ class PostController extends Controller
             );
         }
         return response()->json($data, $data['code']);
+    }
+
+    private function getIdentity($request)
+    {
+        //I want to to make sure that just the creator of the passed ID post
+        //is the only one that can delete the post, and no one else.
+        $jwAuth = new JwtAuth;
+        $token = $request->header('Authorization', null);
+        $user = $jwAuth->checkToken($token, true);
+        return $user;
     }
 }
