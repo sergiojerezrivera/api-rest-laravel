@@ -139,4 +139,34 @@ class PostController extends Controller
         }
         return response()->json($data, $data['code']);
     }
+
+    public function destroy($id, Request $request) {
+        //I want to to make sure that just the creator of the passed ID post
+        //is the only one that can delete the post, and no one else.
+        $jwAuth = new JwtAuth;
+        $token = $request->header('Authorization', null);
+        $user = $jwAuth->checkToken($token, true);
+
+        //Now I make sure the ID param matches with DB and
+        //USER ID of Token matches with userID from DB and 
+        //if both are correct then can delete.
+        $post = Post::where('id', $id)->where('user_id', $user->sub)->first();
+
+        if (is_object($post) && !empty($post)) {
+            $post->delete();
+            $data = array(
+                'code'      => 200,
+                'status'    => 'success',
+                'message'   => 'ELemento eliminado permanentemente',
+                'post'      => $post
+            );
+        } else {
+            $data = array(
+                'code'      => 400,
+                'status'    => 'error',
+                'message'   => 'Error al eliminar el elemento buscado',
+            );
+        }
+        return response()->json($data, $data['code']);
+    }
 }
